@@ -19,6 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Tag(name = "Citizen Controller", description = "Ez a controller felelős minden citizennel kapcsolatos műveletért")
 @RequiredArgsConstructor
 @RestController()
@@ -70,5 +73,25 @@ public class CitizenController {
                                                          @RequestBody @Valid IdentityCardUpdateRequest request) {
         service.updateIdentityCard(id, request);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Citizenek szűrése kor alapján",
+            description = "Egyidősek, fiatalabbak és idősebbek szűrésére való lehetőség",
+            parameters = {@Parameter(in = ParameterIn.PATH, name = "birthdate", description = "Születési idő", example = "1969-07-14"),
+                          @Parameter(in = ParameterIn.PATH, name = "operator", description = "eq=egykorú, lt=idősebb, gt=fiatalabb", example = "eq")
+            })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Sikeres lekérdezés"),
+            @ApiResponse(responseCode = "400", description = "Hibás szűrési feltétel"),
+            @ApiResponse(responseCode = "500", description = "Hiba történt a művelet közben")})
+    @GetMapping(path = "/{birthdate}/{operator}")
+    public ResponseEntity<List<CitizenResponse>> filterByBirthdate(@PathVariable(name = "birthdate") @NotNull LocalDate birthdate,
+                                                                   @PathVariable(name = "operator") @NotNull String operator) {
+        List<CitizenResponse> citizens = service.filterByBirthdate(birthdate, operator)
+                                                .stream()
+                                                .map(c -> modelMapper.map(c, CitizenResponse.class))
+                                                .toList();
+        return ResponseEntity.ok(citizens);
     }
 }

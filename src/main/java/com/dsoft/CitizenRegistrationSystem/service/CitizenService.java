@@ -7,12 +7,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class CitizenService {
+
+    private static final String EQUAL_OPERATOR = "eq";
+    private static final String LESS_THAN_OPERATOR = "lt";
+    private static final String GREATER_THAN_OPERATOR = "gt";
 
     private final CitizenRepository repository;
 
@@ -43,4 +49,16 @@ public class CitizenService {
         return repository.findById(id)
                          .orElseThrow(() -> new NoSuchElementException("No citizen found with the provided id"));
     }
+
+    public List<Citizen> filterByBirthdate(LocalDate birthdate, String operator) {
+        if (!operatorIsValid(operator)) {
+            throw new IllegalArgumentException("The operator value must be eq/lt/gt");
+        }
+        return  repository.filterByBirthdate(birthdate, operator);
+    }
+
+    private boolean operatorIsValid(String operator) {
+        return EQUAL_OPERATOR.equals(operator) || LESS_THAN_OPERATOR.equals(operator) || GREATER_THAN_OPERATOR.equals(operator);
+    }
+
 }
