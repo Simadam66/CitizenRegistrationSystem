@@ -5,6 +5,8 @@ import com.dsoft.CitizenRegistrationSystem.dto.CitizenResponse;
 import com.dsoft.CitizenRegistrationSystem.model.Citizen;
 import com.dsoft.CitizenRegistrationSystem.service.CitizenService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +41,14 @@ public class CitizenController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @Operation(
+            summary = "Személyi alapján lekérés",
+            description = "Citizen lekérdezése személyi igazolványszám alapján",
+            parameters = @Parameter(in = ParameterIn.PATH, name = "identityCard", description = "Személyi igazolványszám", example = "457634KU"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Sikeres lekérés"),
+            @ApiResponse(responseCode = "404", description = "A kért Citizen nem található"),
+            @ApiResponse(responseCode = "500", description = "Hiba történt a lekérdezés közben")})
     @GetMapping(path = "{identityCard}")
     public ResponseEntity<CitizenResponse> getByIdentityCard(@PathVariable(name = "identityCard") @NotNull String identityCard) {
         CitizenResponse citizenResponse = modelMapper.map(service.getByIdentityCard(identityCard), CitizenResponse.class);
