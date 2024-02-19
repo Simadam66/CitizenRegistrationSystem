@@ -2,6 +2,7 @@ package com.dsoft.CitizenRegistrationSystem.controller;
 
 import com.dsoft.CitizenRegistrationSystem.dto.CitizenRequest;
 import com.dsoft.CitizenRegistrationSystem.dto.CitizenResponse;
+import com.dsoft.CitizenRegistrationSystem.dto.IdentityCardUpdateRequest;
 import com.dsoft.CitizenRegistrationSystem.model.Citizen;
 import com.dsoft.CitizenRegistrationSystem.service.CitizenService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +34,7 @@ public class CitizenController {
             description = "Egy új citizen felvétele az adatbázisba")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Sikeres létrehozás"),
-            @ApiResponse(responseCode = "409", description = "A kért Citizen már létezik"),
+            @ApiResponse(responseCode = "409", description = "Már létezik ilyen Citizen ezzel a személyi igazolvánnyal"),
             @ApiResponse(responseCode = "500", description = "Hiba történt a létrehozás közben")})
     @PostMapping
     public ResponseEntity<HttpStatus> createCitizen(@RequestBody @Valid CitizenRequest citizenRequest) {
@@ -53,5 +54,21 @@ public class CitizenController {
     public ResponseEntity<CitizenResponse> getByIdentityCard(@PathVariable(name = "identityCard") @NotNull String identityCard) {
         CitizenResponse citizenResponse = modelMapper.map(service.getByIdentityCard(identityCard), CitizenResponse.class);
         return ResponseEntity.ok(citizenResponse);
+    }
+
+    @Operation(
+            summary = "Személyi frissítése",
+            description = "Citizen személyi igazolványszámának frissítése",
+            parameters = @Parameter(in = ParameterIn.PATH, name = "id", description = "Citizen egyedi azonosítója", example = "64cf8085f51d72128c364016"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Sikeres frissítés"),
+            @ApiResponse(responseCode = "404", description = "A kért Citizen nem található"),
+            @ApiResponse(responseCode = "409", description = "Már létezik ilyen Citizen ezzel a személyi igazolvánnyal"),
+            @ApiResponse(responseCode = "500", description = "Hiba történt a művelet közben")})
+    @PatchMapping(path = "identityCard/{id}")
+    public ResponseEntity<HttpStatus> updateIdentityCard(@PathVariable(name = "id") @NotNull String id,
+                                                         @RequestBody @Valid IdentityCardUpdateRequest request) {
+        service.updateIdentityCard(id, request);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

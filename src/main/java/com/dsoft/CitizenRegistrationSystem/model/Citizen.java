@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
 
@@ -23,7 +22,6 @@ import java.time.LocalDate;
 public class Citizen {
 
     @Id
-    @Field("_id")
     private String id;
     @NotEmpty
     @NotBlank
