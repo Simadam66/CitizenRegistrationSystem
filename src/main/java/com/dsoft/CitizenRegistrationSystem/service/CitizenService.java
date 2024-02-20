@@ -35,16 +35,6 @@ public class CitizenService {
                           .orElseThrow(() -> new NoSuchElementException("No citizen found with the provided identity card"));
     }
 
-    public void updateIdentityCard(String id, IdentityCardUpdateRequest request) {
-        Citizen citizenToUpdate = getById(id);
-        Optional<Citizen> citizenWithProvidedIdentity = repository.findByIdentityCard(request.getIdentityCard());
-        if (citizenWithProvidedIdentity.isPresent() && !citizenWithProvidedIdentity.get().equals(citizenToUpdate)) {
-            throw new DuplicateKeyException("This identity card is already in use");
-        }
-        citizenToUpdate.setIdentityCard(request.getIdentityCard());
-        repository.save(citizenToUpdate);
-    }
-
     public Citizen getById(String id) {
         return repository.findById(id)
                          .orElseThrow(() -> new NoSuchElementException("No citizen found with the provided id"));
@@ -61,4 +51,13 @@ public class CitizenService {
         return EQUAL_OPERATOR.equals(operator) || LESS_THAN_OPERATOR.equals(operator) || GREATER_THAN_OPERATOR.equals(operator);
     }
 
+    public void updateIdentityCard(String id, IdentityCardUpdateRequest request) {
+        Citizen citizenToUpdate = getById(id);
+        Optional<Citizen> citizenWithProvidedIdentity = repository.findByIdentityCard(request.getIdentityCard());
+        if (citizenWithProvidedIdentity.isPresent() && !citizenWithProvidedIdentity.get().equals(citizenToUpdate)) {
+            throw new DuplicateKeyException("This identity card is already in use");
+        }
+        citizenToUpdate.setIdentityCard(request.getIdentityCard());
+        repository.save(citizenToUpdate);
+    }
 }
