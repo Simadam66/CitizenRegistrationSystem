@@ -3,11 +3,14 @@ package com.dsoft.CitizenRegistrationSystem.controller;
 import com.dsoft.CitizenRegistrationSystem.dto.CitizenRequest;
 import com.dsoft.CitizenRegistrationSystem.dto.CitizenResponse;
 import com.dsoft.CitizenRegistrationSystem.dto.IdentityCardUpdateRequest;
+import com.dsoft.CitizenRegistrationSystem.exception.ErrorResponse;
 import com.dsoft.CitizenRegistrationSystem.model.Citizen;
 import com.dsoft.CitizenRegistrationSystem.service.CitizenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,9 +41,9 @@ public class CitizenController {
             summary = "Citizen létrehozása",
             description = "Egy új citizen felvétele az adatbázisba")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Sikeres létrehozás"),
-            @ApiResponse(responseCode = "409", description = "Már létezik ilyen Citizen ezzel a személyi igazolvánnyal"),
-            @ApiResponse(responseCode = "500", description = "Hiba történt a létrehozás közben")})
+            @ApiResponse(responseCode = "201", description = "Sikeres létrehozás", content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "409", description = "Már létezik ilyen Citizen ezzel a személyi igazolvánnyal", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Hiba történt a létrehozás közben", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
     @PostMapping("/create")
     public ResponseEntity<HttpStatus> createCitizen(@RequestBody @Valid CitizenRequest citizenRequest) {
         service.createCitizen(modelMapper.map(citizenRequest, Citizen.class));
@@ -53,8 +56,9 @@ public class CitizenController {
             parameters = @Parameter(in = ParameterIn.PATH, name = "identityCard", description = "Személyi igazolványszám", example = "457634KU"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sikeres lekérés"),
-            @ApiResponse(responseCode = "404", description = "A kért Citizen nem található"),
-            @ApiResponse(responseCode = "500", description = "Hiba történt a lekérdezés közben")})
+            @ApiResponse(responseCode = "400", description = "Hibás szűrési feltétel", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "A kért Citizen nem található", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Hiba történt a lekérdezés közben", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
     @GetMapping("/{identityCard}")
     public ResponseEntity<CitizenResponse> getByIdentityCard(@PathVariable(name = "identityCard") @NotBlank String identityCard) {
         CitizenResponse citizenResponse = modelMapper.map(service.getByIdentityCard(identityCard), CitizenResponse.class);
@@ -69,10 +73,10 @@ public class CitizenController {
             })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sikeres lekérdezés"),
-            @ApiResponse(responseCode = "400", description = "Hibás szűrési feltétel"),
-            @ApiResponse(responseCode = "500", description = "Hiba történt a művelet közben")})
+            @ApiResponse(responseCode = "400", description = "Hibás szűrési feltétel", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Hiba történt a művelet közben", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
     @GetMapping("/filterByBirthdate")
-    public ResponseEntity<List<CitizenResponse>> filterByBirthdate(@RequestParam(name = "birthdate") @Past LocalDate birthdate,
+    public ResponseEntity<List<CitizenResponse>> filterByBirthdate(@RequestParam(name = "birthdate") @Past @NotNull LocalDate birthdate,
                                                                    @RequestParam(name = "operator") @NotBlank String operator) {
         List<CitizenResponse> citizens = service.filterByBirthdate(birthdate, operator)
                 .stream()
@@ -86,12 +90,13 @@ public class CitizenController {
             description = "Citizen személyi igazolványszámának frissítése",
             parameters = @Parameter(in = ParameterIn.PATH, name = "id", description = "Citizen egyedi azonosítója", example = "64cf8085f51d72128c364016"))
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Sikeres frissítés"),
-            @ApiResponse(responseCode = "404", description = "A kért Citizen nem található"),
-            @ApiResponse(responseCode = "409", description = "Már létezik ilyen Citizen ezzel a személyi igazolvánnyal"),
-            @ApiResponse(responseCode = "500", description = "Hiba történt a művelet közben")})
+            @ApiResponse(responseCode = "200", description = "Sikeres frissítés", content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "400", description = "Hibás szűrési feltétel", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "A kért Citizen nem található", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Már létezik ilyen Citizen ezzel a személyi igazolvánnyal", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Hiba történt a művelet közben", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
     @PatchMapping(path = "/{id}/identityCard")
-    public ResponseEntity<HttpStatus> updateIdentityCard(@PathVariable(name = "id") @NotNull String id,
+    public ResponseEntity<HttpStatus> updateIdentityCard(@PathVariable(name = "id") @NotBlank String id,
                                                          @RequestBody @Valid IdentityCardUpdateRequest request) {
         service.updateIdentityCard(id, request);
         return new ResponseEntity<>(HttpStatus.OK);
