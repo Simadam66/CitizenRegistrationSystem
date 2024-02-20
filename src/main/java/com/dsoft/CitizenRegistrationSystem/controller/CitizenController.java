@@ -42,6 +42,7 @@ public class CitizenController {
             description = "Egy új citizen felvétele az adatbázisba")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Sikeres létrehozás", content = @Content(schema = @Schema(hidden = true))),
+            @ApiResponse(responseCode = "400", description = "Paraméterhiba", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "409", description = "Már létezik ilyen Citizen ezzel a személyi igazolvánnyal", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "Hiba történt a létrehozás közben", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
     @PostMapping("/create")
@@ -91,7 +92,7 @@ public class CitizenController {
             parameters = @Parameter(in = ParameterIn.PATH, name = "id", description = "Citizen egyedi azonosítója", example = "64cf8085f51d72128c364016"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sikeres frissítés", content = @Content(schema = @Schema(hidden = true))),
-            @ApiResponse(responseCode = "400", description = "Hibás szűrési feltétel", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Paraméterhiba", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "A kért Citizen nem található", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "409", description = "Már létezik ilyen Citizen ezzel a személyi igazolvánnyal", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "Hiba történt a művelet közben", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
