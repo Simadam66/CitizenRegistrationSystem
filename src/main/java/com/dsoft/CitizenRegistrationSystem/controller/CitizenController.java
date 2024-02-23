@@ -1,8 +1,6 @@
 package com.dsoft.CitizenRegistrationSystem.controller;
 
-import com.dsoft.CitizenRegistrationSystem.dto.CitizenRequest;
-import com.dsoft.CitizenRegistrationSystem.dto.CitizenResponse;
-import com.dsoft.CitizenRegistrationSystem.dto.IdentityCardUpdateRequest;
+import com.dsoft.CitizenRegistrationSystem.dto.*;
 import com.dsoft.CitizenRegistrationSystem.exception.ErrorResponse;
 import com.dsoft.CitizenRegistrationSystem.model.Citizen;
 import com.dsoft.CitizenRegistrationSystem.service.CitizenService;
@@ -100,6 +98,20 @@ public class CitizenController {
     public ResponseEntity<HttpStatus> updateIdentityCard(@PathVariable(name = "id") @NotBlank String id,
                                                          @RequestBody @Valid IdentityCardUpdateRequest request) {
         service.updateIdentityCard(id, request);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PatchMapping(path = "/{id}/updateIdentityAndName")
+    public ResponseEntity<HttpStatus> updateIdentityAndName(@PathVariable(name = "id") @NotBlank String id,
+                                                            @RequestBody PatchRequest request) {
+        service.updateIdentityCardAndName(id, request.getUpdate());
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PatchMapping(path = "/{id}/updateIdentityAndName2")
+    public ResponseEntity<HttpStatus> updateIdentityAndName(@PathVariable(name = "id") @NotBlank String id,
+                                                            @RequestBody IdentityAndNameRequest request) {
+        service.updateIdentityCardAndName(id, request);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }

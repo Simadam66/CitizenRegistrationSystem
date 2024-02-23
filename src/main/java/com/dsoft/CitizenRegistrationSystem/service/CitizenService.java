@@ -1,5 +1,6 @@
 package com.dsoft.CitizenRegistrationSystem.service;
 
+import com.dsoft.CitizenRegistrationSystem.dto.IdentityAndNameRequest;
 import com.dsoft.CitizenRegistrationSystem.dto.IdentityCardUpdateRequest;
 import com.dsoft.CitizenRegistrationSystem.model.Citizen;
 import com.dsoft.CitizenRegistrationSystem.repository.CitizenRepository;
@@ -7,10 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -59,5 +59,50 @@ public class CitizenService {
         }
         citizenToUpdate.setIdentityCard(request.getIdentityCard());
         repository.save(citizenToUpdate);
+    }
+
+    public void updateIdentityCardAndName(String id, HashMap<String, String> update) {
+        Citizen citizen = getById(id);
+        for (Map.Entry<String, String> entry : update.entrySet()) {
+            if (isAllowedField(entry.getKey())) {
+                updateField(citizen, entry);
+            }
+        }
+        repository.save(citizen);
+    }
+
+    public void updateIdentityCardAndName(String id, IdentityAndNameRequest request) {
+        Citizen citizen = getById(id);
+        for (String fieldName : request.getUpdate()) {
+            if (isAllowedField(fieldName)) {
+                try {
+                    Field requestedField =  request.getClass().getDeclaredField(fieldName);
+                    requestedField.setAccessible(true);
+                    Object value = requestedField.get(request);
+                    updateField(citizen, Map.entry(fieldName, String.valueOf(value)));
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        repository.save(citizen);
+    }
+
+    private boolean isAllowedField(String fieldName) {
+        //Simplified implementation
+        return "identityCard".equals(fieldName) || "name".equals(fieldName);
+    }
+
+    private void updateField(Object object, Map.Entry<String, String> entry ) {
+        try {
+            Field field =  object.getClass().getDeclaredField(entry.getKey());
+            field.setAccessible(true);
+            field.set(object, entry.getValue());
+        }
+        catch (NoSuchFieldException ex) {
+            throw new IllegalArgumentException(ex);
+        } catch (IllegalAccessException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }
