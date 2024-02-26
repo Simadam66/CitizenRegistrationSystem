@@ -4,6 +4,7 @@ import com.dsoft.CitizenRegistrationSystem.dto.*;
 import com.dsoft.CitizenRegistrationSystem.exception.ErrorResponse;
 import com.dsoft.CitizenRegistrationSystem.model.Citizen;
 import com.dsoft.CitizenRegistrationSystem.service.CitizenService;
+import com.dsoft.CitizenRegistrationSystem.utils.MappingUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -21,19 +22,23 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "Citizen Controller", description = "Ez a controller felelős minden citizennel kapcsolatos műveletért")
 @RequiredArgsConstructor
 @RestController()
-@RequestMapping(path = "/citizen")
+@RequestMapping(path = "/citizens")
 public class CitizenController {
 
     private final CitizenService service;
 
     private final ModelMapper modelMapper;
+
+    private final MappingUtils<Citizen, CitizenResponse> mappingUtils;
 
     @Operation(
             summary = "Citizen létrehozása",
@@ -43,24 +48,43 @@ public class CitizenController {
             @ApiResponse(responseCode = "400", description = "Paraméterhiba", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "409", description = "Már létezik ilyen Citizen ezzel a személyi igazolvánnyal", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "Hiba történt a létrehozás közben", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-    @PostMapping("/create")
-    public ResponseEntity<HttpStatus> createCitizen(@RequestBody @Valid CitizenRequest citizenRequest) {
-        service.createCitizen(modelMapper.map(citizenRequest, Citizen.class));
-        return new ResponseEntity<>(HttpStatus.CREATED);
+    @PostMapping
+    public ResponseEntity<CitizenResponse> createCitizen(@RequestBody @Valid CitizenRequest citizenRequest) {
+        Citizen savedCitizen = service.createCitizen(modelMapper.map(citizenRequest, Citizen.class));
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                                                  .path("/{id}")
+                                                  .buildAndExpand(savedCitizen.getId())
+                                                  .toUri();
+        return ResponseEntity.created(location).body(modelMapper.map(savedCitizen, CitizenResponse.class));
     }
 
     @Operation(
-            summary = "Személyi alapján lekérés",
-            description = "Citizen lekérdezése személyi igazolványszám alapján",
-            parameters = @Parameter(in = ParameterIn.PATH, name = "identityCard", description = "Személyi igazolványszám", example = "457634KU"))
+            summary = "Id alapú lekérés",
+            description = "Citizen lekérdezése egyéni azonosító alapján",
+            parameters = @Parameter(in = ParameterIn.PATH, name = "id", description = "Egyéni azonosító", example = "64cf8085f51d72128c364016"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sikeres lekérés"),
             @ApiResponse(responseCode = "400", description = "Hibás szűrési feltétel", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "A kért Citizen nem található", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "Hiba történt a lekérdezés közben", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
-    @GetMapping("/{identityCard}")
-    public ResponseEntity<CitizenResponse> getByIdentityCard(@PathVariable(name = "identityCard") @NotBlank String identityCard) {
-        CitizenResponse citizenResponse = modelMapper.map(service.getByIdentityCard(identityCard), CitizenResponse.class);
+    @GetMapping("/{id}")
+    public ResponseEntity<CitizenResponse> getCitizen(@PathVariable(name = "id") @NotBlank String id) {
+        CitizenResponse citizenResponse = modelMapper.map(service.getById(id), CitizenResponse.class);
+        return ResponseEntity.ok(citizenResponse);
+    }
+
+    @Operation(
+            summary = "Személyi alapján lekérés",
+            description = "Citizen lekérdezése személyi igazolványszám alapján",
+            parameters = @Parameter(in = ParameterIn.QUERY, name = "identityCard", description = "Személyi igazolványszám", example = "457634KU"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Sikeres lekérés"),
+            @ApiResponse(responseCode = "400", description = "Hibás szűrési feltétel", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "A kért Citizen nem található", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Hiba történt a lekérdezés közben", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))})
+    @GetMapping("/filterByIdentityCard")
+    public ResponseEntity<CitizenResponse> filterByIdentityCard(@RequestParam(name = "identityCard") @NotBlank String identityCard) {
+        CitizenResponse citizenResponse = modelMapper.map(service.filterByIdentityCard(identityCard), CitizenResponse.class);
         return ResponseEntity.ok(citizenResponse);
     }
 
@@ -77,10 +101,7 @@ public class CitizenController {
     @GetMapping("/filterByBirthdate")
     public ResponseEntity<List<CitizenResponse>> filterByBirthdate(@RequestParam(name = "birthdate") @Past @NotNull LocalDate birthdate,
                                                                    @RequestParam(name = "operator") @NotBlank String operator) {
-        List<CitizenResponse> citizens = service.filterByBirthdate(birthdate, operator)
-                .stream()
-                .map(c -> modelMapper.map(c, CitizenResponse.class))
-                .toList();
+        List<CitizenResponse> citizens = mappingUtils.mapList(service.filterByBirthdate(birthdate, operator), CitizenResponse.class);
         return ResponseEntity.ok(citizens);
     }
 

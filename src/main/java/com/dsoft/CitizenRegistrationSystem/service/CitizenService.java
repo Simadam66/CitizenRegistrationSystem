@@ -22,22 +22,22 @@ public class CitizenService {
 
     private final CitizenRepository repository;
 
-    public void createCitizen(Citizen citizen) {
+    public Citizen createCitizen(Citizen citizen) {
         Optional<Citizen> citizenWithSameIdentity = repository.findByIdentityCard(citizen.getIdentityCard());
         if (citizenWithSameIdentity.isPresent()) {
             throw new DuplicateKeyException("This identity card is already in use");
         }
-        repository.save(citizen);
-    }
-
-    public Citizen getByIdentityCard(String identityCard) {
-        return  repository.findByIdentityCard(identityCard)
-                          .orElseThrow(() -> new NoSuchElementException("No citizen found with the provided identity card"));
+        return repository.save(citizen);
     }
 
     public Citizen getById(String id) {
         return repository.findById(id)
-                         .orElseThrow(() -> new NoSuchElementException("No citizen found with the provided id"));
+                .orElseThrow(() -> new NoSuchElementException("No citizen found with the provided id"));
+    }
+
+    public Citizen filterByIdentityCard(String identityCard) {
+        return  repository.findByIdentityCard(identityCard)
+                          .orElseThrow(() -> new NoSuchElementException("No citizen found with the provided identity card"));
     }
 
     public List<Citizen> filterByBirthdate(LocalDate birthdate, String operator) {
@@ -54,7 +54,7 @@ public class CitizenService {
     public void updateIdentityCard(String id, IdentityCardUpdateRequest request) {
         Citizen citizenToUpdate = getById(id);
         Optional<Citizen> citizenWithProvidedIdentity = repository.findByIdentityCard(request.getIdentityCard());
-        if (citizenWithProvidedIdentity.isPresent() && !citizenWithProvidedIdentity.get().equals(citizenToUpdate)) {
+        if (citizenWithProvidedIdentity.isPresent() && !citizenWithProvidedIdentity.get().getId().equals(citizenToUpdate.getId())) {
             throw new DuplicateKeyException("This identity card is already in use");
         }
         citizenToUpdate.setIdentityCard(request.getIdentityCard());

@@ -50,7 +50,7 @@ public class CitizenServiceTest {
     void getByIdentityCardReturnsRightCitizen() {
         when(repository.findByIdentityCard(anyString())).thenReturn(Optional.of(CITIZEN_1));
 
-        Citizen citizen = service.getByIdentityCard(USER_1_IDENTITYCARD);
+        Citizen citizen = service.filterByIdentityCard(USER_1_IDENTITYCARD);
 
         verify(repository, times(1)).findByIdentityCard(USER_1_IDENTITYCARD);
         assertEquals(CITIZEN_1, citizen);
@@ -60,7 +60,7 @@ public class CitizenServiceTest {
     void getByIdentityCardThrowsNoSuchElementException() {
         when(repository.findByIdentityCard(anyString())).thenReturn(Optional.empty());
 
-        NoSuchElementException ex = assertThrows(NoSuchElementException.class, () -> service.getByIdentityCard(FAKE_IDENTITYCARD));
+        NoSuchElementException ex = assertThrows(NoSuchElementException.class, () -> service.filterByIdentityCard(FAKE_IDENTITYCARD));
         assertEquals("No citizen found with the provided identity card", ex.getMessage());
         verify(repository, times(1)).findByIdentityCard(FAKE_IDENTITYCARD);
     }
