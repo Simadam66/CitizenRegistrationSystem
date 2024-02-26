@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class IdentityAndNameRequest {
+public class IdentityCardAndNameRequest {
     @NotBlank
     private String name;
 
@@ -16,7 +16,7 @@ public class IdentityAndNameRequest {
 
     private List<String> update;
 
-    public IdentityAndNameRequest() {
+    public IdentityCardAndNameRequest() {
         this.update = new ArrayList<>();
     }
 }

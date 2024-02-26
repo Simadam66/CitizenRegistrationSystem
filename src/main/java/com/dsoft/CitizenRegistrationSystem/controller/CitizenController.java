@@ -122,16 +122,16 @@ public class CitizenController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PatchMapping(path = "/{id}/updateIdentityAndName")
-    public ResponseEntity<HttpStatus> updateIdentityAndName(@PathVariable(name = "id") @NotBlank String id,
-                                                            @RequestBody PatchRequest request) {
-        service.updateIdentityCardAndName(id, request.getUpdate());
+    @PatchMapping(path = "/{id}/updateIdentityCardAndName")
+    public ResponseEntity<HttpStatus> updateIdentityCardAndName(@PathVariable(name = "id") @NotBlank String id,
+                                                            @RequestBody @Valid List<PatchRequest> requests) {
+        service.updateIdentityCardAndName(id, requests);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PatchMapping(path = "/{id}/updateIdentityAndName2")
-    public ResponseEntity<HttpStatus> updateIdentityAndName(@PathVariable(name = "id") @NotBlank String id,
-                                                            @RequestBody IdentityAndNameRequest request) {
+    @PatchMapping(path = "/{id}/updateIdentityCardAndNameAlternative")
+    public ResponseEntity<HttpStatus> updateIdentityCardAndName(@PathVariable(name = "id") @NotBlank String id,
+                                                            @RequestBody @Valid IdentityCardAndNameRequest request) {
         service.updateIdentityCardAndName(id, request);
         return new ResponseEntity<>(HttpStatus.OK);
     }

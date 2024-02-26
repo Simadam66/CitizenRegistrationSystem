@@ -1,7 +1,6 @@
 package com.dsoft.CitizenRegistrationSystem.service;
 
-import com.dsoft.CitizenRegistrationSystem.dto.IdentityAndNameRequest;
-import com.dsoft.CitizenRegistrationSystem.dto.IdentityCardUpdateRequest;
+import com.dsoft.CitizenRegistrationSystem.dto.*;
 import com.dsoft.CitizenRegistrationSystem.model.Citizen;
 import com.dsoft.CitizenRegistrationSystem.repository.CitizenRepository;
 import lombok.RequiredArgsConstructor;
@@ -53,25 +52,31 @@ public class CitizenService {
 
     public void updateIdentityCard(String id, IdentityCardUpdateRequest request) {
         Citizen citizenToUpdate = getById(id);
-        Optional<Citizen> citizenWithProvidedIdentity = repository.findByIdentityCard(request.getIdentityCard());
-        if (citizenWithProvidedIdentity.isPresent() && !citizenWithProvidedIdentity.get().getId().equals(citizenToUpdate.getId())) {
+        if (isIdentityCardInUse(citizenToUpdate, request.getIdentityCard())) {
             throw new DuplicateKeyException("This identity card is already in use");
         }
         citizenToUpdate.setIdentityCard(request.getIdentityCard());
         repository.save(citizenToUpdate);
     }
 
-    public void updateIdentityCardAndName(String id, HashMap<String, String> update) {
+    private boolean isIdentityCardInUse(Citizen citizenToUpdate, String newIdentityCard) {
+        Optional<Citizen> citizenWithProvidedIdentity = repository.findByIdentityCard(newIdentityCard);
+        return citizenWithProvidedIdentity.isPresent() && !citizenWithProvidedIdentity.get().getId().equals(citizenToUpdate.getId());
+    }
+
+    public void updateIdentityCardAndName(String id, List<PatchRequest> requests) {
         Citizen citizen = getById(id);
-        for (Map.Entry<String, String> entry : update.entrySet()) {
-            if (isAllowedField(entry.getKey())) {
-                updateField(citizen, entry);
+        for (PatchRequest request : requests) {
+            if (request.getAction().equals(ActionEnum.UPDATE) &&
+                    isAllowedField(request.getPropertyName()) &&
+                    isAllowedValue(citizen, request.getPropertyName(), request.getValue())) {
+                updateField(citizen, Map.entry(request.getPropertyName() , request.getValue()));
             }
         }
         repository.save(citizen);
     }
 
-    public void updateIdentityCardAndName(String id, IdentityAndNameRequest request) {
+    public void updateIdentityCardAndName(String id, IdentityCardAndNameRequest request) {
         Citizen citizen = getById(id);
         for (String fieldName : request.getUpdate()) {
             if (isAllowedField(fieldName)) {
@@ -79,7 +84,9 @@ public class CitizenService {
                     Field requestedField =  request.getClass().getDeclaredField(fieldName);
                     requestedField.setAccessible(true);
                     Object value = requestedField.get(request);
-                    updateField(citizen, Map.entry(fieldName, String.valueOf(value)));
+                    if (isAllowedValue(citizen, requestedField.getName(), value.toString())) {
+                        updateField(citizen, Map.entry(fieldName, String.valueOf(value)));
+                    }
                 } catch (NoSuchFieldException | IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
@@ -89,8 +96,17 @@ public class CitizenService {
     }
 
     private boolean isAllowedField(String fieldName) {
-        //Simplified implementation
-        return "identityCard".equals(fieldName) || "name".equals(fieldName);
+    return AllowedFields.IDENTITY_CARD_FIELD.equals(fieldName) || AllowedFields.NAME_FIELD.equals(fieldName);
+    }
+
+    private boolean isAllowedValue(Citizen citizenToUpdate, String field, String value)
+    {
+        boolean isAllowed;
+        switch (field) {
+            case AllowedFields.IDENTITY_CARD_FIELD -> isAllowed = !isIdentityCardInUse(citizenToUpdate, value);
+            default -> isAllowed = true;
+        }
+        return isAllowed;
     }
 
     private void updateField(Object object, Map.Entry<String, String> entry ) {
