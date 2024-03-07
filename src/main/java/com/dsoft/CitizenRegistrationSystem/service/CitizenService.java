@@ -111,7 +111,12 @@ public class CitizenService {
     {
         boolean isAllowed;
         switch (field) {
-            case AllowedFields.IDENTITY_CARD_FIELD -> isAllowed = true /*!isIdentityCardInUse(citizenToUpdate, value)*/;
+            case AllowedFields.IDENTITY_CARD_FIELD -> {
+                isAllowed = !isIdentityCardInUse(citizenToUpdate, value);
+                if (!isAllowed) {
+                    throw new DuplicateKeyException("This identity card is already in use");
+                }
+            }
             case AllowedFields.NAME_FIELD -> isAllowed = true;
             default -> isAllowed = false;
         }
@@ -159,18 +164,18 @@ public class CitizenService {
         }
         if (citizen != null && citizenHistory != null) {
             try {
-                citizenHistoryRepository.save(citizenHistory);
-            }
-            catch (RuntimeException ex) {
-                log.error(TRANSACTION_ERROR_HISTORY_SAVE_FAILURE);
-                exceptionMessages.add(TRANSACTION_ERROR_HISTORY_SAVE_FAILURE);
-            }
-            try {
                 updateIdentityCardAndName(id, request);
             }
             catch (RuntimeException ex) {
                 log.error(TRANSACTION_ERROR_CITIZEN_UPDATE_FAILURE);
                 exceptionMessages.add(TRANSACTION_ERROR_CITIZEN_UPDATE_FAILURE);
+            }
+            try {
+                citizenHistoryRepository.save(citizenHistory);
+            }
+            catch (RuntimeException ex) {
+                log.error(TRANSACTION_ERROR_HISTORY_SAVE_FAILURE);
+                exceptionMessages.add(TRANSACTION_ERROR_HISTORY_SAVE_FAILURE);
             }
         }
         if (!exceptionMessages.isEmpty()) {
@@ -184,7 +189,7 @@ public class CitizenService {
             builder.append(message);
             builder.append(" | ");
         }
-        builder.setLength(builder.length() -2);
+        builder.setLength(builder.length() -3);
         return  builder.toString();
     }
 }
