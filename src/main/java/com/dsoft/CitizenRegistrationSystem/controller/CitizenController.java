@@ -135,4 +135,11 @@ public class CitizenController {
         service.updateIdentityCardAndName(id, request);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @PatchMapping(path = "/{id}/updateIdentityCardAndNameTransaction")
+    public ResponseEntity<HttpStatus> updateIdentityCardAndNameTransaction(@PathVariable(name = "id") @NotBlank String id,
+                                                                @RequestBody @Valid IdentityCardAndNameRequest request) {
+        service.updateIdentityCardAndNameTransaction(id, request);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }
